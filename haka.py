@@ -7,6 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from sqlalchemy import create_engine
+from datetime import datetime
 
 def Obtener_Datos(batch_size=100000):
     db_user = os.environ.get('DB_USER')
@@ -108,7 +109,7 @@ def devolver_base_random(df_stats, fecha_str, hora_inicio, hora_fin, df_unicas):
     stats_dia = stats_dia[(stats_dia['hour'] < h_fin) | 
                           ((stats_dia['hour'] == h_fin) & (stats_dia['min'] < m_fin))]
 
-    print(f"Number of rows in stats_dia: {len(stats_dia)}")
+    #print(f"Number of rows in stats_dia: {len(stats_dia)}")
     
     resultados = []
     
@@ -127,7 +128,7 @@ def devolver_base_random(df_stats, fecha_str, hora_inicio, hora_fin, df_unicas):
                
         # Generar un valor aleatorio siguiendo una distribución normal
         valor_aleatorio = np.random.normal(media, std_dev)
-        print(f"Generated value: {valor_aleatorio}")
+        #print(f"Generated value: {valor_aleatorio}")
         # Redondear el valor a enteros (ya que estamos tratando con conteos)
         valor_aleatorio = round(valor_aleatorio)
         seg = random.randint(0, 59)
@@ -140,7 +141,7 @@ def devolver_base_random(df_stats, fecha_str, hora_inicio, hora_fin, df_unicas):
         if matching_rows.shape[0] != 1:
             raise ValueError(f"Expected one matching row, found {matching_rows.shape[0]}")
         match_row = matching_rows.iloc[0]
-        print(f"Number of matching rows: {len(matching_rows)}")                       
+        #print(f"Number of matching rows: {len(matching_rows)}")                       
         for _ in range(valor_aleatorio):
             resultados.append({
                 'eventType': match_row['eventType'],
@@ -155,8 +156,9 @@ def devolver_base_random(df_stats, fecha_str, hora_inicio, hora_fin, df_unicas):
     return df_resultado
     
 
-def guardar_como_csv(df, ruta,fecha):
-    date=fecha.strftime('%d-%m-%Y')
+def guardar_como_csv(df, ruta,fecha_str):
+    fecha = datetime.strptime(fecha_str, '%d,%m,%Y')
+    date = fecha.strftime('%d-%m-%Y')
     file_name= f"output{date}.csv"
     file_path = os.path.join(ruta,file_name)
     df.to_csv(file_path, index=False)
@@ -203,6 +205,8 @@ def main():
     hora_fin = os.environ.get('HORA_FIN', '06:52:00')
     to_email = os.environ.get('TO_EMAIL', 'destinatario@example.com')
 
+    print("Variables de entorno cargadas correctamente")  
+
     ruta_csv = '/mnt/output'  # Usar siempre /tmp en Lambda
 
     df = Obtener_Datos()
@@ -213,11 +217,15 @@ def main():
     base = devolver_base_random(df_stats, fecha_str, hora_inicio, hora_fin, df_unicas)
     
     # Guardar como CSV
-    csv_path = guardar_como_csv(base, ruta_csv)
+    csv_path = guardar_como_csv(base, ruta_csv,fecha_str)
+    print(f"Archivo CSV guardado en: {csv_path}")
     # Enviar el archivo CSV por correo electrónico
     enviar_email_con_smtp(to_email, csv_path)
-    
+    print("Correo enviado correctamente") 
     return {
         'statusCode': 200,
         'body': f"CSV generated and sent to {to_email}"
     }
+
+if __name__ == "__main__":
+    main()

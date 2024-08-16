@@ -11,7 +11,7 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copiar el código de la aplicación al contenedor
-COPY . /app
+COPY haka.py /app/haka.py
 
 # Crear un directorio para guardar archivos temporales
 RUN mkdir -p /mnt/output
