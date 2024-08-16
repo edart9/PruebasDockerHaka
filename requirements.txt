@@ -1,4 +1,4 @@
 pandas
 numpy
-psycopg2-binary
 sqlalchemy
+smtplib
