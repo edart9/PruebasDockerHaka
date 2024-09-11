@@ -27,6 +27,7 @@ def Obtener_Datos(batch_size=100000):
         dfs.append(chunk)
 
     df = pd.concat(dfs, ignore_index=True)
+    df['eventDate'] = df['eventDate'].dt.tz_convert('America/La_Paz')
     return df
 
 def filtrados(df):
